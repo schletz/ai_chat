@@ -1,0 +1,33 @@
+#!/bin/sh
+# Pre-commit hook: build the frontend and stage the generated output.
+# The build (see frontend/vite.config.js) writes to ../docs with
+# emptyOutDir enabled, so the freshly built docs/ is added to the commit.
+# A failing build aborts the commit.
+#
+# This hook is versioned in the repository. Activate it once per clone via
+# the install-hooks script (sets core.hooksPath to this directory).
+
+echo "[pre-commit] Building frontend..."
+
+# Resolve the repository root so the hook works regardless of the caller's CWD.
+repo_root="$(git rev-parse --show-toplevel)"
+
+cd "$repo_root/frontend" || {
+    echo "[pre-commit] frontend directory not found." >&2
+    exit 1
+}
+
+npm run build
+status=$?
+
+if [ "$status" -ne 0 ]; then
+    echo "[pre-commit] Build failed (exit $status). Commit aborted." >&2
+    exit "$status"
+fi
+
+# Stage the regenerated build output into the current commit.
+cd "$repo_root" || exit 1
+git add docs
+
+echo "[pre-commit] Build succeeded, docs/ staged."
+exit 0

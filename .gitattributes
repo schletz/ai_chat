@@ -1,0 +1,10 @@
+# Normalize line endings across platforms.
+* text=auto
+
+# Shell scripts and the Git hook must keep LF, otherwise they break under
+# Unix shells (e.g. "#!/bin/sh\r" errors) even when cloned on Windows.
+*.sh            text eol=lf
+.githooks/*     text eol=lf
+
+# Windows batch files need CRLF.
+*.cmd           text eol=crlf

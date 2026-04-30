@@ -1,0 +1,22 @@
+[tool.pylint.messages_control]
+disable = [
+    "logging-fstring-interpolation",
+    "logging-format-interpolation",
+    "broad-exception-caught",
+    "broad-except",
+    "missing-module-docstring",
+    "trailing-whitespace",
+    "missing-final-newline",
+    "try-except-raise",
+    "invalid-name",
+    "redefined-outer-name",
+    "global-statement",
+    "too-few-public-methods",
+    "line-too-long",
+    "wrong-import-order",
+    "too-many-instance-attributes",
+    "too-many-arguments",
+    "too-many-positional-arguments",
+    "too-many-branches",
+    "duplicate-code",
+]
