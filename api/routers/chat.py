@@ -15,7 +15,7 @@ async def get_chat(
     char_repo: CharacterRepository = Depends(get_character_repository),
     agent: CharacterAgent = Depends(get_character_agent)
 ):
-    """Retrieves chat history. Optionally with timestamp filter for incremental loading."""
+    """Holt den bisherigen Chat-Verlauf ab. Optional mit Zeitstempel, um nur neue Nachrichten zu laden (Inkrementelles Laden spart Bandbreite)."""
     if char_repo.get_character_by_name(name) is None:
         raise HTTPException(status_code=404, detail="Character not found.")
 
@@ -33,11 +33,13 @@ async def send_chat_message(
     agent: CharacterAgent = Depends(get_character_agent),
     llm_lock: asyncio.Lock = Depends(get_llm_lock)
 ):
-    """Sends a message to the character and generates a response via LLM."""
+    """Sendet eine Benutzernachricht an den Charakter und generiert eine Antwort."""
     if char_repo.get_character_by_name(name) is None:
         raise HTTPException(status_code=404, detail="Character not found")
 
-    # IMPORTANT: asyncio.to_thread prevents blocking the event loop during GPU inference.
+    # WICHTIG: Die Ausführung des LLMs (Inference) ist ressourcenintensiv und blockierend.
+    # `asyncio.to_thread` lagert diese Ausführung in einen Hintergrund-Thread aus,
+    # damit der Haupt-Event-Loop von FastAPI nicht blockiert wird und weiterhin andere Anfragen bedienen kann.
     async with llm_lock:
         bot_response_text = await asyncio.to_thread(agent.process_user_message, chat_msg.message)
 
@@ -52,7 +54,7 @@ async def recreate_chat_message(
     agent: CharacterAgent = Depends(get_character_agent),
     llm_lock: asyncio.Lock = Depends(get_llm_lock)
 ):
-    """Deletes the last assistant response and regenerates it (based on the same context)."""
+    """Löscht die letzte KI-Antwort und erstellt sie auf Basis der bestehenden Chathistorie neu."""
     if char_repo.get_character_by_name(name) is None:
         raise HTTPException(status_code=404, detail="Character not found.")
 
@@ -70,7 +72,7 @@ async def delete_chat_message(
     timestamp: int,
     chat_repo: ChatRepository = Depends(get_chat_repository)
 ):
-    """Deletes a specific message from the chat history."""
+    """Löscht eine spezifische Nachricht anhand ihres Zeitstempels aus dem Verlauf."""
     if chat_repo.delete_message(timestamp):
         return {"message": "Message deleted."}
     raise HTTPException(status_code=404, detail="Message not found.")

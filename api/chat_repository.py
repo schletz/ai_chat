@@ -4,8 +4,10 @@ from typing import List, Dict, Optional
 from repository import Repository
 
 
-# Manages the conversational state. In LLM applications, history management is critical
-# as language models are inherently stateless; context must be appended dynamically per request.
+# Verwatet den Zustand des Chats.
+# Wichtiges Konzept: Sprachmodelle (LLMs) sind von Natur aus zustandslos (stateless).
+# Sie haben kein Gedächtnis. Daher muss der gesamte Chat-Verlauf (Kontext) bei jeder neuen
+# Anfrage dynamisch zusammengebaut und erneut mitgeschickt werden.
 class ChatRepository(Repository):
     def __init__(self, data_dir: str, user: str, character: str):
         super().__init__(
@@ -23,9 +25,10 @@ class ChatRepository(Repository):
         now = int(1000 * time.time())
         msg = {"timestamp": now, "role": "assistant", "content": content}
 
-        # Conforming strictly to the OpenAI/LLaMA tool calling specification.
-        # When an LLM executes a tool, the specific 'tool_calls' schema must be embedded
-        # in the history so the context window recognizes it as a system action, not arbitrary text.
+        # Einhaltung der OpenAI/LLaMA Spezifikationen für Tool-Calling:
+        # Wenn ein LLM ein Werkzeug ausführt, muss dieses spezielle `tool_calls` Schema
+        # in der Historie gespeichert werden. Das Kontext-Fenster des Modells erkennt daran,
+        # dass eine Systemaktion stattfand und nicht einfach nur Text generiert wurde.
         if tool_calls:
             msg["tool_calls"] = tool_calls
 

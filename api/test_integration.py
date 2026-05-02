@@ -7,9 +7,9 @@ from character_repository import CharacterRepository
 from chat_repository import ChatRepository
 from llm_service import LLMService
 
-# This script serves as a headless integration test environment.
-# It bootstraps the entire dependency chain (Repositories -> Service -> Agent)
-# outside of the FastAPI context to isolate and debug LLM generation logic.
+# Dieses Skript dient als Headless-Integrationstest.
+# Es lädt die gesamte Abhängigkeitskette (Repositories -> Service -> Agent)
+# außerhalb des FastAPI-Kontexts, um die LLM-Generierungslogik isoliert zu testen.
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,

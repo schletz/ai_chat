@@ -1,5 +1,5 @@
-# Custom exception hierarchy. Creating specific exceptions rather than using
-# built-in Exception classes allows higher layers to catch and handle
-# domain-specific errors predictably.
+# Eigene Exception-Klasse. Anstatt generische Exceptions zu werfen,
+# erstellen wir fachspezifische (domain-specific) Fehlermeldungen.
+# Dadurch können aufrufende Schichten diese gezielt abfangen (Try-Catch) und behandeln.
 class ChatException(Exception):
     pass

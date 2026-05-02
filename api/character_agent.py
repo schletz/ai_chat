@@ -13,8 +13,8 @@ from llm_service import LLMService
 logger = logging.getLogger(__name__)
 
 
-# The CharacterAgent orchestrates the interaction between the conversational history,
-# the underlying LLM, and external tool execution. It acts as the "Brain" of the entity.
+# Der CharacterAgent ist das "Gehirn" des Chatbots.
+# Er koordiniert das Zusammenspiel zwischen dem LLM, der Chat-Historie und externen Werkzeugen.
 class CharacterAgent:
     def __init__(
         self,
@@ -36,9 +36,10 @@ class CharacterAgent:
     def _build_system_prompt(self) -> str:
         base_prompt = self.system_prompt
 
-        # We append strict systemic constraints to the user-defined prompt.
-        # This architectural pattern guarantees that security, formatting logic,
-        # and core behavioral instructions cannot be overridden easily by prompt injection.
+        # Architektur-Pattern: Schutz vor Prompt Injection.
+        # Wir hängen harte System-Regeln IMMER an das Ende des benutzerdefinierten Prompts an.
+        # Dadurch hat das LLM diese Regeln als Letztes im Kontext, wodurch verhindert wird,
+        # dass Nutzer durch geschickte Eingaben ("Vergiss alle bisherigen Anweisungen...") die Kontrolle übernehmen.
         agent_instruction = (
             "\n\n--- IMPORTANT SYSTEM RULES ---\n"
             "Parts of the incoming messages may be enclosed in XML tags (e.g., <timestamp>...</timestamp>, <location>...</location>). "
@@ -54,9 +55,10 @@ class CharacterAgent:
         clean_history = []
         tag_pattern = re.compile(r"<.*>", flags=re.DOTALL)
 
-        # Before serving data to the client, we scrub internal metadata (like XML tags and tool calls).
-        # This enforces the Presentation Layer constraint: the frontend should only display
-        # conversational data, remaining oblivious to the agent's internal reasoning or tool execution logic.
+        # Presentation Layer Constraint (Darstellungsschicht-Regel):
+        # Das Frontend soll nur reine Text-Chats anzeigen.
+        # Wir entfernen hier intern genutzte Metadaten (wie XML-Tags oder Werkzeug-Aufrufe).
+        # Dadurch weiß das Frontend nichts von der "Gedankenwelt" oder den Hintergrundprozessen des Agenten.
         for msg in raw_history:
             role = msg.get("role", "")
             if role != "assistant" and role != "user":
@@ -83,9 +85,10 @@ class CharacterAgent:
     def recreate_last_message(self) -> str:
         return self.__process_history()
 
-    # This method implements the ReAct (Reasoning and Acting) loop.
-    # It continuously queries the LLM until the LLM returns a final response
-    # instead of requesting a tool execution.
+    # Implementierung des ReAct (Reasoning and Acting) Patterns.
+    # Dies ist eine Kernschleife in Agentic AI: Der Agent wird gefragt, antwortet entweder mit einem fertigen Text
+    # oder mit dem Wunsch, ein Werkzeug zu nutzen. Wenn er ein Werkzeug nutzt, wird das Ergebnis an ihn
+    # zurückgegeben und die Schleife läuft erneut, bis eine finale Antwort generiert wird.
     def __process_history(self) -> str:
         llm_tools = self.tool_collection.generate_tools_array()
         active_system_prompt = self._build_system_prompt()
@@ -95,9 +98,9 @@ class CharacterAgent:
         logger.info(f"[ASSIST] {response}")
         tool_call_info = self.llm_service.get_tool_call(response)
 
-        # While loop handles sequential tool execution. If the model determines it needs
-        # external data, we suspend generation, run local Python code, inject the result
-        # back into the context window, and resume generation.
+        # Die While-Schleife ermöglicht die Nutzung mehrerer Werkzeuge nacheinander.
+        # Erkennt das Modell, dass es ein Tool braucht, stoppt die Generierung. Wir führen den Python-Code aus,
+        # geben das Ergebnis zurück in den LLM-Kontext (die Historie) und starten die Generierung erneut.
         while tool_call_info is not None:
             logger.info(f"[TOOL CALL] {tool_call_info}")
             call_id = "call_" + str(uuid.uuid4())[:8]

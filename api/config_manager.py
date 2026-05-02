@@ -4,6 +4,11 @@ from typing import Dict, List, Optional
 
 
 class ConfigManager:
+    """
+    Zentrale Klasse für die Verwaltung der System-Konfiguration.
+    Liest und schreibt die Einstellungen sicher in eine JSON-Datei,
+    sodass diese auch bei einem Serverneustart erhalten bleiben.
+    """
     def __init__(self, data_dir: str):
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)

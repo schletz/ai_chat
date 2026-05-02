@@ -7,7 +7,7 @@ router = APIRouter(prefix="/characters")
 
 @router.get("")
 async def get_characters(char_repo: CharacterRepository = Depends(get_character_repository)):
-    """Lists all characters for the authenticated user."""
+    """Gibt alle Charaktere zurück, die dem aktuell authentifizierten Benutzer gehören."""
     return {"characters": char_repo.data}
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -15,7 +15,7 @@ async def create_character(
     char: CharacterCreate,
     char_repo: CharacterRepository = Depends(get_character_repository)
 ):
-    """Creates a new character. Checks for duplicates."""
+    """Erstellt einen neuen Charakter. Verhindert die Erstellung, wenn der Name bereits existiert."""
     if char_repo.get_character_by_name(char.name) is not None:
         raise HTTPException(status_code=400, detail="Character already exists")
 
@@ -32,7 +32,7 @@ async def update_character(
     update_data: CharacterUpdate,
     char_repo: CharacterRepository = Depends(get_character_repository)
 ):
-    """Updates system prompt or timestamp setting of a character."""
+    """Aktualisiert die Einstellungen eines existierenden Charakters, wie z.B. den System-Prompt."""
     try:
         char_repo.set_character_settings(
             character=name,
@@ -48,7 +48,7 @@ async def delete_character(
     name: str,
     char_repo: CharacterRepository = Depends(get_character_repository)
 ):
-    """Deletes a character and its associated data."""
+    """Löscht einen Charakter vollständig, einschließlich seiner Chat-Historie."""
     if char_repo.delete_character(name):
         return {"message": f"Character {name} successfully deleted."}
     raise HTTPException(status_code=404, detail="Character not found.")

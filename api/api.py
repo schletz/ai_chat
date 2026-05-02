@@ -1,20 +1,11 @@
 """
-Gemma 4 Chat API - FastAPI Application Entry Point
+Gemma 4 Chat API - FastAPI Einstiegspunkt
 ==================================================
-This file contains all the logic of the REST API, including:
-- Configuration & Environment Handling
-- Pydantic Schemas for Request/Response Validation
-- JWT-based Authentication (Stateless)
-- VRAM Management for the Local LLM
-- CRUD Endpoints for Characters and Chats
-- System/Model Management
-
-Developer Notes:
-- The LLM is loaded into VRAM only once at startup. Reloading occurs only 
-  upon explicit model change or server restart.
-- Authentication uses HttpOnly cookies with JWT. No session storage on the server.
-- The shutdown mechanism during model switching uses `_thread.interrupt_main()` to ensure 
-  that the 200 OK response reaches the frontend before the process is terminated.
+Diese Datei bildet den Startpunkt für den REST-Server mit FastAPI.
+Architektur-Zusammenhänge für den Unterricht:
+- Globale State-Verwaltung (`lifespan`): Modelle (z. B. 30GB groß) dürfen nicht pro Request neu geladen werden. Sie werden beim Start (lifespan) in den VRAM (Grafikkartenspeicher) geladen.
+- Dependency Injection: FastAPI nutzt `Depends`, um z.B. Repositories oder die LLM-Services an die Router zu übergeben. In dieser Hauptdatei werden sie global auf dem `app.state` bereitgestellt.
+- Modulare Router: Um die API übersichtlich zu halten, sind die Endpunkte in der `routers/`-Ordnerstruktur aufgeteilt (`include_router`).
 """
 
 # ==============================================================================
@@ -89,15 +80,14 @@ logger = logging.getLogger(__name__)
 # ==============================================================================
 # 4. GLOBAL STATE & DEPENDENCIES
 # ==============================================================================
-# Note: llm_service serves as a singleton placeholder for the VRAM state.
-# It is initialized in the lifespan context and released on shutdown.
+# Singleton-Referenz für das LLM: Der Service bleibt während der gesamten Laufzeit im VRAM.
 llm_service = None
 
-# asyncio.Lock prevents race conditions during sequential LLM inference.
-# Requests are queued until the model is ready or a generation is complete.
+# Da LLM-Anfragen (Inference) asynchron nacheinander verarbeitet werden müssen,
+# wird ein Lock verwendet. Andernfalls würden sich gleichzeitige Anfragen beim Modell überschneiden.
 llm_lock = asyncio.Lock()
 
-# Central configuration instance (manages .json config files)
+# Zentrale Verwaltung der Konfiguration
 config_manager = ConfigManager(DATA_DIR)
 llm_tool_collection = LLMToolCollection(TOOLS_DIR, DATA_DIR, config_manager, llm_service)
 

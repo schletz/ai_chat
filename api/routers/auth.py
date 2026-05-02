@@ -9,8 +9,8 @@ router = APIRouter()
 
 def create_access_token(data: dict, secret_key: str, algorithm: str) -> str:
     """
-    Creates a JWT with an expiration time (24 hours).
-    Uses 'sub' as the standard field for the username.
+    Erstellt ein signiertes JSON Web Token (JWT), welches für 24 Stunden gültig ist.
+    Nach Standard wird das Feld 'sub' (Subject) verwendet, um den Benutzernamen zu speichern.
     """
     to_encode = data.copy()
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
@@ -20,8 +20,8 @@ def create_access_token(data: dict, secret_key: str, algorithm: str) -> str:
 @router.get("/accept-cert")
 async def accept_certificate(redirectUrl: str):
     """
-    Triggers browser certificate warnings (HTTPS/SSL).
-    Redirects to the target URL with a query parameter after acceptance.
+    Wird aufgerufen, um im Browser die Zertifikatswarnung (HTTPS/SSL) für selbstsignierte Zertifikate auszulösen.
+    Leitet nach der Akzeptanz zurück zur Ziel-URL.
     """
     separator = "&" if "?" in redirectUrl else "?"
     final_url = f"{redirectUrl}{separator}certificateAccepted=true"
@@ -35,7 +35,7 @@ async def authenticate_user(
     secret_key: str = Depends(get_secret_key),
     algorithm: str = Depends(get_algorithm)
 ):
-    """User login. Validates credentials and sets JWT cookie."""
+    """Benutzer-Login. Überprüft die Zugangsdaten und setzt das JWT als sicheres HttpOnly-Cookie."""
     if not user_repo.authenticate(req.username, req.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password"
@@ -54,6 +54,6 @@ async def authenticate_user(
 
 @router.post("/users/logout")
 async def logout(response: Response):
-    """Deletes the JWT cookie and ends the session on the client side."""
+    """Löscht das JWT-Cookie. Da wir zustandslos arbeiten (stateless), ist der Benutzer damit serverseitig sofort abgemeldet."""
     response.delete_cookie(key="access_token", secure=True, samesite="none", httponly=True)
     return {"message": "Successfully logged out"}

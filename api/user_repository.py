@@ -5,15 +5,16 @@ from typing import Dict, Tuple, Optional
 from repository import Repository
 
 
-# Handles authentication state management with strict cryptographic principles.
+# Verwaltet die Benutzer-Logins unter strikter Einhaltung kryptographischer Best Practices.
 class UserRepository(Repository):
     def __init__(self, data_dir: str):
         super().__init__(data_dir, "users.json")
 
     def _hash_password(self, password: str, salt: bytes = None) -> Tuple[str, str]:
-        # Utilizes PBKDF2 (Password-Based Key Derivation Function 2) to mitigate
-        # dictionary and rainbow table attacks. By enforcing 100,000 iterations,
-        # brute-forcing derived hashes becomes computationally unfeasible.
+        # Nutzung von PBKDF2 (Password-Based Key Derivation Function 2).
+        # Algorithmen wie MD5 oder SHA256 sind zu schnell und daher anfällig für Brute-Force oder Rainbow-Tables.
+        # PBKDF2 wendet den Hash-Algorithmus (hier 100.000 Mal) immer wieder an. Das macht das Hashen absichtlich
+        # langsam und vereitelt dadurch massenhafte Ausprobier-Attacken (Brute Force).
         if salt is None:
             salt = os.urandom(16)
         key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
@@ -39,7 +40,7 @@ class UserRepository(Repository):
         salt_bytes = bytes.fromhex(user["salt"])
         _, check_hash = self._hash_password(password, salt=salt_bytes)
 
-        # Uses constant-time comparison (secrets.compare_digest) rather than the standard '==' operator.
-        # This prevents Timing Attacks, where an attacker measures the exact microsecond a comparison fails
-        # to incrementally guess a valid hash structure.
+        # Konstante-Zeit-Vergleich (`secrets.compare_digest`) anstelle des normalen `==` Operators.
+        # Ein normales `==` bricht ab, sobald das erste Zeichen falsch ist. Ein Angreifer könnte durch
+        # das Messen von Mikrosekunden-Verzögerungen (Timing Attack) Zeichen für Zeichen das richtige Passwort erraten.
         return secrets.compare_digest(user["hash"], check_hash)

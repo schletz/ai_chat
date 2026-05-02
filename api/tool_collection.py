@@ -9,6 +9,11 @@ from llm_service import LLMService
 
 
 class LLMToolCollection:
+    """
+    Verwaltet die dynamisch geladenen Werkzeuge (Tools) für das LLM.
+    Zeigt im Unterricht die Konzepte von Reflection (Code, der eigenen Code analysiert)
+    und dynamischem Modul-Laden in Python (Plugin-Architektur).
+    """
     def __init__(self, tools_dir: str, data_dir: str, config_manager: ConfigManager, llm_service: LLMService):
         self.tools_dir = tools_dir
         self.data_dir = data_dir
@@ -21,32 +26,33 @@ class LLMToolCollection:
         if not os.path.exists(self.tools_dir):
             os.makedirs(self.tools_dir)
 
-        # 1. Alle .py Dateien im Ordner scannen
+        # 1. Scanne das Verzeichnis nach Python-Dateien
         for filename in os.listdir(self.tools_dir):
             if filename.endswith(".py") and not filename.startswith("__"):
                 module_name = filename[:-3]
                 file_path = os.path.join(self.tools_dir, filename)
 
-                # 2. Modul dynamisch und sicher laden
+                # 2. Dynamisches Laden (Plugin-System): Lädt Module zur Laufzeit statt statisch mit "import".
                 spec = importlib.util.spec_from_file_location(module_name, file_path)
                 if spec and spec.loader:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
 
-                    # 3. Alle Klassen finden, die von BaseTool erben
+                    # 3. Reflection: Durchsucht das Modul nach Klassen, die von `BaseTool` erben.
                     for name, obj in inspect.getmembers(module, inspect.isclass):
                         if issubclass(obj, BaseTool) and obj is not BaseTool:
-                            # 4. Plugin instanziieren und speichern
+                            # 4. Instanziiert das Plugin und reicht die Abhängigkeiten weiter.
                             self.plugins.append(obj(self.data_dir, self.config_manager, self.llm_service))
 
     def generate_tools_array(self) -> List[ChatCompletionTool]:
         tools = []
         type_mapping = {int: "integer", float: "number", str: "string", bool: "boolean"}
 
-        # Iteriere über alle instanziierten Plugins
+        # Iteriere über alle aktiven Plugins
         for plugin in self.plugins:
-            # inspect.ismethod findet nur gebundene Objekt-Methoden
+            # Reflection: Finde alle Methoden, die an dieses Objekt gebunden sind.
             for name, method in inspect.getmembers(plugin, predicate=inspect.ismethod):
+                # Prüfe, ob die Methode unseren speziellen `@llm_tool` Decorator hat.
                 if getattr(method, "_is_llm_tool", False):
                     sig = inspect.signature(method)
                     properties = {}
@@ -83,7 +89,8 @@ class LLMToolCollection:
         for plugin in self.plugins:
             if hasattr(plugin, func_name):
                 method = getattr(plugin, func_name)
-                # Sicherheitscheck: Nur dekorierte Methoden dürfen ausgeführt werden
+                # Wichtiger Sicherheitscheck: Das LLM darf nur Methoden ausführen,
+                # die explizit vom Entwickler mit `@llm_tool` markiert wurden.
                 if getattr(method, "_is_llm_tool", False):
                     return method(**kwargs)
 

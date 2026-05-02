@@ -37,8 +37,10 @@ async def get_current_user(
     algorithm: str = Depends(get_algorithm)
 ) -> str:
     """
-    FastAPI Dependency: Extracts and validates the JWT from HttpOnly cookies.
-    Returns the username on success, otherwise raises a 401 HTTPException.
+    Abhängigkeitsinjektion (Dependency Injection):
+    Diese Funktion liest das JWT (JSON Web Token) sicher aus dem HttpOnly-Cookie.
+    So muss die Authentifizierungslogik nicht in jedem Router-Endpunkt wiederholt werden.
+    Wird bei fehlendem Token automatisch einen 401 Unauthorized Fehler an den Client werfen.
     """
     token = request.cookies.get("access_token")
     if not token:

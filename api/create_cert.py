@@ -5,9 +5,10 @@ from cryptography import x509
 from cryptography.x509.oid import NameOID
 
 
-# Utility script for generating self-signed SSL/TLS certificates.
-# Secure HTTP-only cookies (SameSite=None) strictly require an HTTPS connection.
-# This script provisions local developer environments with the necessary key pairs.
+# Hilfsskript zur Generierung von selbstsignierten SSL/TLS Zertifikaten.
+# Hintergrund: Sichere Cookies (HttpOnly, SameSite=None) verlangen zwingend eine
+# sichere HTTPS-Verbindung. Dieses Skript stellt die Schlüssel für lokale
+# Entwicklungsumgebungen bereit, um diese Sicherheitsrichtlinien erfüllen zu können.
 def generate_self_signed_cert():
     print("Generiere privaten Schlüssel...")
     private_key = rsa.generate_private_key(

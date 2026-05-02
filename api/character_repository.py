@@ -5,9 +5,9 @@ from chat_exception import ChatException
 from repository import Repository
 
 
-# Implements the Repository Pattern specifically for Character domains.
-# Encapsulates all data access logic, hiding the underlying file-system operations
-# from the business logic layer (CharacterAgent).
+# Implementiert das Repository-Muster (Repository Pattern) speziell für Chat-Charaktere.
+# Es kapselt jegliche Dateisystem-Logik. Die Business-Logik (`CharacterAgent`) greift nur
+# auf Methoden dieses Objekts zu und weiß nicht, wie oder wo die Daten physisch gespeichert werden.
 class CharacterRepository(Repository):
     def __init__(self, data_dir: str, user: str):
         super().__init__(data_dir, f"{self.encode_filename_part(user)}_characters.json")
@@ -64,9 +64,9 @@ class CharacterRepository(Repository):
         self.set_character_settings(character=character, system_prompt=content)
 
     def delete_character(self, name: str) -> bool:
-        # Implements a cascading delete strategy. When a character entity is removed,
-        # its associated chat state file is also purged to maintain data integrity
-        # and prevent orphaned records on the disk.
+        # Kaskadierendes Löschen (Cascading Delete):
+        # Wenn ein Charakter gelöscht wird, wird auch die zugehörige Chat-Historie (Datei)
+        # entfernt, um verwaiste Daten (Datenmüll) auf der Festplatte zu verhindern.
         initial_len = len(self.data)
         self.data = [c for c in self.data if c.get("name") != name]
 

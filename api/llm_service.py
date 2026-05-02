@@ -5,9 +5,9 @@ from typing import Dict, List, Optional
 from llama_cpp import ChatCompletionTool, Llama
 
 
-# Abstracts the complexity of the underlying C++ LLaMA library.
-# Provides a clean interface for injecting context, handling inference configuration,
-# and parsing specialized model output syntax (like tool calls) cleanly.
+# Abstrahiert die Komplexität der zugrundeliegenden C++ LLaMA Bibliothek.
+# Stellt eine saubere Schnittstelle bereit, um Kontext zu injizieren,
+# Inferenz-Konfigurationen zu verwalten und spezielle Modellausgaben (wie Tool-Aufrufe) zu verarbeiten.
 class LLMService:
     def __init__(self, llm_instance: Llama):
         self._llm = llm_instance
@@ -96,8 +96,9 @@ class LLMService:
         return response["choices"][0]["message"]["content"].strip()
 
     def get_tool_call(self, content: str) -> Dict | None:
-        # Regex-based parser to identify proprietary tool-calling sequences in the raw LLM output.
-        # This bridges the gap between text generation and structured JSON extraction.
+        # Ein Regex (Regulärer Ausdruck) basierter Parser.
+        # Er durchsucht den rohen Text-Output des LLM nach speziellen Werkzeug-Aufruf-Mustern.
+        # So wird aus unstrukturiertem Text eine strukturierte JSON-Extraktion für den Python-Code.
         tool_match = re.search(r"<\|tool_call>call:([^{]+)(\{.*?\})<tool_call\|>", content)
         if not tool_match:
             return None

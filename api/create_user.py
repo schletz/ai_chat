@@ -8,9 +8,9 @@ load_dotenv()
 DATA_DIR = os.getenv("DATA_DIR", "data")
 
 
-# CLI bootstrapping tool.
-# Provides an administrative way to populate the user database outside of the web API flow,
-# ensuring secure password hashing processes are utilized correctly from the start.
+# CLI-Tool (Command Line Interface) für die Ersteinrichtung.
+# Bietet eine administrative Möglichkeit, neue Nutzer außerhalb der Web-API anzulegen.
+# So wird sichergestellt, dass die Passwörter von Anfang an korrekt gehasht werden.
 def main():
     if len(sys.argv) != 3:
         print("Verwendung: python create_user.py <username> <passwort>")
